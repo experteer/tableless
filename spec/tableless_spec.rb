@@ -13,12 +13,22 @@ describe 'association caching' do
       t.string :name
     end
 
+    ActiveRecord::Migration.create_table :functions do |t|
+      t.integer :id
+      t.string :name
+    end
+
     class Gender < ActiveRecord::Base
+    end
+
+    class Function < ActiveRecord::Base
     end
 
     Gender.create!(:name => 'male')
     Gender.create!(:name => 'female')
-
+    Function.create!(:name => '1one')
+    Function.create!(:name => '2two')
+    Function.create!(:name => '3three')
 
   end
 
@@ -26,6 +36,7 @@ describe 'association caching' do
     @klass=Class.new(Tableless::Model) do
       column :name, :string, '', false #name,type,default, nullable
       belongs_to :gender
+      has_and_belongs_to_many :functions
 
       column :string_field, :string
       column :integer_field, :integer
@@ -50,6 +61,9 @@ describe 'association caching' do
 
   let(:male) { Gender.find_by_name("male") }
   let(:female) { Gender.find_by_name("female") }
+  let(:one) { Function.find_by_name("1one") }
+  let(:two) { Function.find_by_name("2two") }
+  let(:three) { Function.find_by_name("3three") }
 
   context "with class" do
     it "should have columns" do
@@ -71,7 +85,7 @@ describe 'association caching' do
       instance.integer_field.should == 123
       instance.boolean_field.should == false
       instance.decimal_field.should == 123.45
-      instance.date_field.should == Date.new(2013,2,1)
+      instance.date_field.should == Date.new(2013, 2, 1)
     end
 
 
@@ -110,6 +124,18 @@ describe 'association caching' do
 
   end
 
+  context "with has_and_belongs_to_many" do
+    it "should maintain the ids" do
+      instance = @klass.new(:function_ids => [one.id, two.id])
+      instance.functions[0].should == one
+      instance.functions.should == [one,two]
+
+      instance.function_ids = [three.id,one.id]
+      instance.functions[0].should == three
+      instance.functions.should == [three,one]
+
+    end
+  end
   context "with the belongs_to assoc" do
 
     it 'should define the gender_id column' do
