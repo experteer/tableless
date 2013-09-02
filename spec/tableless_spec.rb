@@ -140,7 +140,7 @@ describe 'association caching' do
 
     it 'should define the gender_id column' do
       p=@klass.new(:gender_id => male.id)
-      p.gender_id.should_not be_nil
+      p.gender_id.should be_an(Integer)
       p.gender_id.should == male.id
     end
 
@@ -159,6 +159,11 @@ describe 'association caching' do
       p.gender.should == male
       p.gender_id = female.id
       p.gender.should == female
+    end
+
+    it "should set gender_id nil if gender is not set" do
+      p=@klass.new
+      p.gender_id.should eql(nil)
     end
 
   end

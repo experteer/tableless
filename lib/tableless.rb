@@ -62,7 +62,7 @@ module Tableless
 
       def belongs_to sth, options={}
         #don't use << here!
-        self.columns += [SchemaColumn.new("#{sth}_id", 'integer', nil, false)]
+        self.columns += [SchemaColumn.new("#{sth}_id", nil, 'integer', false)]
         super
       end
     end #of class methods
