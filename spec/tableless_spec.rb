@@ -129,15 +129,21 @@ describe 'association caching' do
       instance = @klass.new(:function_ids => [one.id, two.id])
       instance.functions[0].should == one
       instance.functions.should == [one,two]
-
       instance.function_ids = [three.id,one.id]
       instance.functions[0].should == three
       instance.functions.should == [three,one]
 
     end
-  end
-  context "with the belongs_to assoc" do
 
+    it "should allow deletion of ids (without db access)" do
+      instance = @klass.new(:function_ids => [one.id, two.id])
+      instance.functions = [one]
+      instance.functions.should == [one]
+      instance.function_ids.should == [one.id]
+    end
+  end
+
+  context "with the belongs_to assoc" do
     it 'should define the gender_id column' do
       p=@klass.new(:gender_id => male.id)
       p.gender_id.should be_an(Integer)

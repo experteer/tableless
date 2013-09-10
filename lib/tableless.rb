@@ -8,14 +8,7 @@ module Tableless
     #we don't mess around with the db we just fix the target
     def replace(other_array)
       other_array.each { |val| raise_on_type_mismatch(val) }
-
-      load_target
-      #optimize for speed
-      other = other_array.size < 100 ? other_array : other_array.to_set
-      current = @target.size < 100 ? @target : @target.to_set
-
-      @target.delete_if { |v| !other.include?(v) }
-      @target.concat other_array.select { |v| !current.include?(v) }
+      @target = other_array.uniq
       nil
     end
   end
@@ -31,9 +24,8 @@ module Tableless
     def initialize(params = {})
       super(params)
       self.class.reflections.collect do |assoc_name, reflection|
-
         if reflection.collection?
-          assoc = self.send(assoc_name)
+          assoc = self.association(assoc_name)
           class << assoc
             include TablelessAssociationCollection
           end
