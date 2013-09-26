@@ -55,6 +55,9 @@ module Tableless
       def belongs_to sth, options={}
         #don't use << here!
         self.columns += [SchemaColumn.new("#{sth}_id", nil, 'integer', false)]
+        if options[:polymorphic]
+          self.columns += [SchemaColumn.new("#{sth}_type", nil, 'string', false)]
+        end
         super
       end
     end #of class methods

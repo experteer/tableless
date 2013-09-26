@@ -141,6 +141,12 @@ describe 'association caching' do
       instance.functions.should == [one]
       instance.function_ids.should == [one.id]
     end
+
+    it 'should handle attribute assignments' do
+      instance = @klass.new(:function_ids => [one.id, two.id])
+      instance.attributes = { :function_ids => [ one.id ] }
+      instance.functions.should == [one]
+    end
   end
 
   context "with the belongs_to assoc" do
@@ -170,6 +176,24 @@ describe 'association caching' do
     it "should set gender_id nil if gender is not set" do
       p=@klass.new
       p.gender_id.should eql(nil)
+    end
+
+    context 'polymorphic' do
+      before :each do 
+        class TM1 < Tableless::Model
+          column :name, :string, '', false #name,type,default, nullable
+          belongs_to :gender, :polymorphic => true
+        end
+      end
+      after :each do
+        Object.send(:remove_const, :TM1) if defined?(TM1)
+      end
+
+      it "should define a gender_type column in case of polymorphic association" do
+        p = TM1.new(:gender => male)
+        p.gender_type.should be_an(String)
+        p.gender_type.should == "Gender"
+      end
     end
 
   end
