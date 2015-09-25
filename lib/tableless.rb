@@ -35,7 +35,7 @@ module Tableless
 
     class << self
 
-      %w(has_many).each do |m|
+      %w(has_many has_and_belongs_to_many).each do |m|
         eval %{
     def #{m}(*args)
       raise "Can't #{m} a Tableless class"
