@@ -36,7 +36,6 @@ describe 'association caching' do
     @klass=Class.new(Tableless::Model) do
       column :name, :string, '', false #name,type,default, nullable
       belongs_to :gender
-      has_and_belongs_to_many :functions
 
       column :string_field, :string
       column :integer_field, :integer
@@ -124,31 +123,6 @@ describe 'association caching' do
 
   end
 
-  context "with has_and_belongs_to_many" do
-    it "should maintain the ids" do
-      instance = @klass.new(:function_ids => [one.id, two.id])
-      instance.functions[0].should == one
-      instance.functions.should == [one,two]
-      instance.function_ids = [three.id,one.id]
-      instance.functions[0].should == three
-      instance.functions.should == [three,one]
-
-    end
-
-    it "should allow deletion of ids (without db access)" do
-      instance = @klass.new(:function_ids => [one.id, two.id])
-      instance.functions = [one]
-      instance.functions.should == [one]
-      instance.function_ids.should == [one.id]
-    end
-
-    it 'should handle attribute assignments' do
-      instance = @klass.new(:function_ids => [one.id, two.id])
-      instance.attributes = { :function_ids => [ one.id ] }
-      instance.functions.should == [one]
-    end
-  end
-
   context "with the belongs_to assoc" do
     it 'should define the gender_id column' do
       p=@klass.new(:gender_id => male.id)
@@ -179,7 +153,7 @@ describe 'association caching' do
     end
 
     context 'polymorphic' do
-      before :each do 
+      before :each do
         class TM1 < Tableless::Model
           column :name, :string, '', false #name,type,default, nullable
           belongs_to :gender, :polymorphic => true
@@ -196,5 +170,25 @@ describe 'association caching' do
       end
     end
 
+  end
+
+  context "has_and_belongs_many associations" do
+    it "should raise an exception" do
+      expect {
+        Class.new(Tableless::Model) do
+          has_and_belongs_to_many :something
+        end
+      }.to raise_error("Can't has_and_belongs_to_many a Tableless class")
+    end
+  end
+
+  context "has_many associations" do
+    it "should raise an exception" do
+      expect {
+        Class.new(Tableless::Model) do
+          has_many :something
+        end
+      }.to raise_error("Can't has_many a Tableless class")
+    end
   end
 end
