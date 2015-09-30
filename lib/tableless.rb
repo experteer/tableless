@@ -44,8 +44,9 @@ module Tableless
         }
       end
 
-      def column(name, type, default=nil, null=false)
-        self.columns += [SchemaColumn.new(name.to_s, default, type.to_s, null)]
+      def column(name, sql_type, default=nil, null=false)
+        type = "ActiveRecord::Type::#{sql_type.to_s.camelize}".constantize.new rescue sql_type.to_s
+        self.columns += [SchemaColumn.new(name.to_s, default, type, null)]
       end
 
       def primary_key
@@ -54,9 +55,9 @@ module Tableless
 
       def belongs_to sth, options={}
         #don't use << here!
-        self.columns += [SchemaColumn.new("#{sth}_id", nil, 'integer', false)]
+        self.columns += [SchemaColumn.new("#{sth}_id", nil, ActiveRecord::Type::Integer.new, false)]
         if options[:polymorphic]
-          self.columns += [SchemaColumn.new("#{sth}_type", nil, 'string', false)]
+          self.columns += [SchemaColumn.new("#{sth}_type", nil, ActiveRecord::Type::String.new, false)]
         end
         super
       end
