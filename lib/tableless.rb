@@ -45,8 +45,11 @@ module Tableless
       end
 
       def column(name, sql_type, default=nil, null=false)
-        type = "ActiveRecord::Type::#{sql_type.to_s.camelize}".constantize.new rescue sql_type.to_s
-        self.columns += [SchemaColumn.new(name.to_s, default, type, null)]
+        string_sql_type = sql_type.to_s
+        # In Postgres, there is no string data type ...
+        string_sql_type = "varchar" if string_sql_type == "string"
+        cast_type = ActiveRecord::Base.connection.lookup_cast_type(string_sql_type)
+        self.columns += [SchemaColumn.new(name.to_s, default, cast_type, string_sql_type, null)]
       end
 
       def primary_key
@@ -54,10 +57,12 @@ module Tableless
       end
 
       def belongs_to sth, options={}
+        integer_cast_type = ActiveRecord::Base.connection.lookup_cast_type("integer")
         #don't use << here!
-        self.columns += [SchemaColumn.new("#{sth}_id", nil, ActiveRecord::Type::Integer.new, false)]
+        self.columns += [SchemaColumn.new("#{sth}_id", nil, integer_cast_type, "integer", false)]
         if options[:polymorphic]
-          self.columns += [SchemaColumn.new("#{sth}_type", nil, ActiveRecord::Type::String.new, false)]
+          string_cast_type = ActiveRecord::Base.connection.lookup_cast_type("varchar")
+          self.columns += [SchemaColumn.new("#{sth}_type", nil, string_cast_type, "varchar", false)]
         end
         super
       end
