@@ -48,7 +48,7 @@ module Tableless
         string_sql_type = sql_type.to_s
         # In Postgres, there is no string data type ...
         string_sql_type = "varchar" if string_sql_type == "string"
-        cast_type = ActiveRecord::Base.connection.lookup_cast_type(string_sql_type)
+        cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, string_sql_type)
         self.columns += [SchemaColumn.new(name.to_s, default, cast_type, string_sql_type, null)]
       end
 
@@ -57,11 +57,11 @@ module Tableless
       end
 
       def belongs_to sth, options={}
-        integer_cast_type = ActiveRecord::Base.connection.lookup_cast_type("integer")
+        integer_cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, "integer")
         #don't use << here!
         self.columns += [SchemaColumn.new("#{sth}_id", nil, integer_cast_type, "integer", false)]
         if options[:polymorphic]
-          string_cast_type = ActiveRecord::Base.connection.lookup_cast_type("varchar")
+          string_cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, "varchar")
           self.columns += [SchemaColumn.new("#{sth}_type", nil, string_cast_type, "varchar", false)]
         end
         super
