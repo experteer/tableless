@@ -44,12 +44,24 @@ module Tableless
         }
       end
 
+      def load_schema!
+        columns_hash.each do |name, column|
+          self.define_attribute(
+            name,
+            column.sql_type_metadata,
+            default: column.default,
+            user_provided_default: false
+          )
+        end
+      end
+
+      def columns_hash
+        @columns_hash ||= Hash[columns.map { |column| [column.name, column] }]
+      end
+
       def column(name, sql_type, default=nil, null=false)
-        string_sql_type = sql_type.to_s
-        # In Postgres, there is no string data type ...
-        string_sql_type = "varchar" if string_sql_type == "string"
-        cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, string_sql_type)
-        self.columns += [SchemaColumn.new(name.to_s, default, cast_type, string_sql_type, null)]
+        type = "ActiveRecord::Type::#{sql_type.to_s.camelize}".constantize.new
+        self.columns += [ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, type, null, '')]
       end
 
       def primary_key
@@ -57,12 +69,9 @@ module Tableless
       end
 
       def belongs_to sth, options={}
-        integer_cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, "integer")
-        #don't use << here!
-        self.columns += [SchemaColumn.new("#{sth}_id", nil, integer_cast_type, "integer", false)]
+        self.columns += [ActiveRecord::ConnectionAdapters::Column.new("#{sth}_id", nil, ActiveRecord::Type::Integer.new, false, '')]
         if options[:polymorphic]
-          string_cast_type = ActiveRecord::Base.connection.__send__(:lookup_cast_type, "varchar")
-          self.columns += [SchemaColumn.new("#{sth}_type", nil, string_cast_type, "varchar", false)]
+          self.columns += [ActiveRecord::ConnectionAdapters::Column.new("#{sth}_type", nil, ActiveRecord::Type::String.new, false, '')]
         end
         super
       end
@@ -84,18 +93,5 @@ module Tableless
     end
         }
     end
-
-
-    #
-    #def self.column_names
-    #  columns.map(&:name)
-    #end
-    #
-    #def self.base_class
-    #  ActiveRecord::Base
-    #end
-    #def self.abstract_class
-    #  true
-    #end
   end
 end
